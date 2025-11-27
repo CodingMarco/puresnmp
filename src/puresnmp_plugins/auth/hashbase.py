@@ -44,12 +44,13 @@ class TIncoming(Protocol):
         ...
 
 
-def for_outgoing(hasher: THasher, hmac_method: str) -> TOutgoing:
+def for_outgoing(hasher: THasher, hmac_method: str, truncate_to: int = 12) -> TOutgoing:
     """
     Create a new callable able to authenticate outgoing messages.
 
     :param hasher: A function used to apply a hashing algorithm.
     :param hmac_method: The specific HMAC implementation to use
+    :param truncate_to: Number of bytes to truncate the HMAC to (default 12 for MD5/SHA1)
     :return: A callable that can be used in a puresnmp authentication plugin
     """
 
@@ -65,18 +66,20 @@ def for_outgoing(hasher: THasher, hmac_method: str) -> TOutgoing:
             auth_key,
             data,
             engine_id,
+            truncate_to,
         )
         return digest
 
     return authenticate_outgoing_message
 
 
-def for_incoming(hasher: THasher, hmac_method: str) -> TIncoming:
+def for_incoming(hasher: THasher, hmac_method: str, truncate_to: int = 12) -> TIncoming:
     """
     Create a new callable able to authenticate incoming messages.
 
     :param hasher: A function used to apply a hashing algorithm.
     :param hmac_method: The specific HMAC implementation to use
+    :param truncate_to: Number of bytes to truncate the HMAC to (default 12 for MD5/SHA1)
     :return: A callable that can be used in a puresnmp authentication plugin
     """
 
@@ -96,7 +99,7 @@ def for_incoming(hasher: THasher, hmac_method: str) -> TIncoming:
             applied
         """
         expected_digest = get_message_digest(
-            hasher, hmac_method, auth_key, data, engine_id
+            hasher, hmac_method, auth_key, data, engine_id, truncate_to
         )
         return received_digest == expected_digest
 
@@ -109,6 +112,7 @@ def get_message_digest(
     auth_key: bytes,
     encoded_message: bytes,
     engine_id: bytes,
+    truncate_to: int = 12,
 ) -> bytes:
     """
     Calculate the digest for a given message.
@@ -118,7 +122,8 @@ def get_message_digest(
     :param auth_key: The authentication key for the user
     :param encoded_message: The SNMP message as bytes
     :param engine_id: The ID of the receiving engine
+    :param truncate_to: Number of bytes to truncate the HMAC to (default 12 for MD5/SHA1)
     """
     auth_key = hasher(auth_key, engine_id)
     mac = hmac.new(auth_key, encoded_message, digestmod=method)
-    return mac.digest()[:12]
+    return mac.digest()[:truncate_to]

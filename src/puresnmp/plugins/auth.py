@@ -35,6 +35,9 @@ rules:
   registrations. See
   https://www.iana.org/assignments/snmp-number-spaces/snmp-number-spaces.xhtml
   and :rfc:`3411`
+* Contain a int-variable ``MAC_LENGTH``. This variable specifies the length
+  in bytes of the truncated HMAC used by this authentication method (e.g., 12
+  for MD5/SHA-1, 24 for SHA-256)
 """
 
 import importlib
@@ -93,6 +96,7 @@ def is_valid_auth_mod(mod: ModuleType) -> bool:
             hasattr(mod, "authenticate_outgoing_message"),
             hasattr(mod, "IDENTIFIER"),
             hasattr(mod, "IANA_ID"),
+            hasattr(mod, "MAC_LENGTH"),
         ]
     )
 

@@ -500,6 +500,10 @@ def localise_key(credentials: V3, engine_id: bytes) -> bytes:
         hasher = password_to_key(
             cast(Callable[[bytes], TDigestable], hashlib.sha1), 20
         )
+    elif credentials.auth.method == "sha256":
+        hasher = password_to_key(
+            cast(Callable[[bytes], TDigestable], hashlib.sha256), 32
+        )
     else:
         raise SnmpError(
             "Unknown authentication method: %r" % credentials.auth.method

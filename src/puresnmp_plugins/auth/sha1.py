@@ -9,6 +9,7 @@ from puresnmp.util import password_to_key
 
 IDENTIFIER = "sha1"
 IANA_ID = 3
+MAC_LENGTH = 12  # RFC 3414: HMAC-SHA-96 uses 12-byte (96-bit) truncated MAC
 
 hasher = password_to_key(hashlib.sha1, 20)
 

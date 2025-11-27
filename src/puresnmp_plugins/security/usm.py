@@ -31,7 +31,7 @@ from puresnmp.util import get_request_id, localise_key, validate_response_id
 IDENTIFIER = 3
 
 
-def reset_digest(message: Message) -> Message:
+def reset_digest(message: Message, auth_method: str = "md5") -> Message:
     """
     Replace the current message-digest in a message with zeroes.
 
@@ -40,12 +40,15 @@ def reset_digest(message: Message) -> Message:
     message would change, because the digest changes.
 
     :param message: The message (with or without digest)
+    :param auth_method: The authentication method being used
     :returns: A new message with zeroed digest
     """
-    # As per https://tools.ietf.org/html/rfc3414#section-6.3.1,
-    # the auth-key needs to be initialised to 12 zeroes
+    # Get MAC length from the auth plugin
+    auth_plugin = auth.create(auth_method)
+    digest_length = auth_plugin.MAC_LENGTH
+
     secparams = USMSecurityParameters.decode(message.security_parameters)
-    neutral = replace(secparams, auth_params=b"\x00" * 12)
+    neutral = replace(secparams, auth_params=b"\x00" * digest_length)
     output = replace(
         message,
         security_parameters=bytes(neutral),
@@ -282,7 +285,7 @@ def apply_authentication(
 
     auth_method = auth.create(credentials.auth.method)
     try:
-        without_digest = reset_digest(unauthed_message)
+        without_digest = reset_digest(unauthed_message, credentials.auth.method)
         auth_result = auth_method.authenticate_outgoing_message(
             credentials.auth.key,
             bytes(without_digest),
@@ -320,7 +323,7 @@ def verify_authentication(
         )
 
     auth_method = auth.create(credentials.auth.method)
-    without_digest = reset_digest(message)
+    without_digest = reset_digest(message, credentials.auth.method)
     is_authentic = auth_method.authenticate_incoming_message(
         credentials.auth.key,
         bytes(without_digest),

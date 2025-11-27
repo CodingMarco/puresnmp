@@ -9,6 +9,7 @@ from puresnmp.util import password_to_key
 
 IDENTIFIER = "md5"
 IANA_ID = 2
+MAC_LENGTH = 12  # RFC 3414: HMAC-MD5-96 uses 12-byte (96-bit) truncated MAC
 
 hasher = password_to_key(hashlib.md5, 16)
 
